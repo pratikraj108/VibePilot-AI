@@ -171,44 +171,42 @@ Open [http://localhost:3000](http://localhost:3000) to view the application runn
 
 ### 1. Landing & Google Authentication
 > *A sleek dark-mode landing screen featuring glassmorphic cards and a single-click sign-in button using Google Authentication.*
-```
+
 <img width="1733" height="867" alt="image" src="https://github.com/user-attachments/assets/af1f1311-f427-4fb7-8d67-aad89ab57cd3" />
 
 
-```
 
 ### 2. Interactive Task Dashboard
 > *Your active cockpit. Lists tasks alongside their priorities, deadlines, and mathematical Risk score badges. Features quick toggles to start the AI breakdown workflow.*
-```
+
 <img width="1912" height="857" alt="image" src="https://github.com/user-attachments/assets/d393a9d4-70d9-422b-abb3-9305f39b728c" />
 
-```
+
 
 ### 3. Multi-Agent AI Action Plan Modal
 > *Displays the detailed outputs of the agent chain: Subtasks (Breakdown), day-by-day workload charts (Schedule), and mathematical feasibility summaries (Risk Analysis).*
-```
+
 <img width="1120" height="631" alt="image" src="https://github.com/user-attachments/assets/683bf45e-c42e-4e88-b8a0-5319d82db653" />
 <img width="1152" height="780" alt="image" src="https://github.com/user-attachments/assets/45184553-7977-4e14-81e4-a7f0cdeee864" />
 <img width="1107" height="787" alt="image" src="https://github.com/user-attachments/assets/6065a8d0-36c7-4e88-9b92-4d2d2d0d87e2" />
 
 
-```
+
 
 ### 4. Interactive Workload Calendar
 > *Displays your deadlines as priority-colored badges, overlaid with AI scheduled hours. Highlights heavy workload days in yellow/red warning alerts.*
-```
+
 <img width="1127" height="720" alt="image" src="https://github.com/user-attachments/assets/0cc05863-8652-440d-8614-27db4b68168d" />
 
-```
+
 
 ### 5. AI Insights & Habits Analytics
 > *Features a Recharts Line Chart for task completion history, a Bar Chart for risk-habit diagnostics, and custom productivity advice written by Gemini.*
-```
+
 <img width="748" height="712" alt="image" src="https://github.com/user-attachments/assets/ec1a296e-1d77-41a6-a321-8701965c9042" />
 
-```
 
----
+
 
 ## 🔮 Future Scope
 * 📅 **Native Calendar Two-Way Sync:** Automatically syncing external Google Calendar events into VibePilot dashboard views.
