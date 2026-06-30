@@ -1,23 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plane, ArrowRight, Loader2, Zap } from "lucide-react";
+import { Plane, ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function LoginPage() {
-  const { user, signInWithGoogle } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
+    if (!authLoading && user) {
       router.push("/dashboard");
     }
-  }, [user, router]);
+  }, [user, authLoading, router]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-6">
+        <div className="relative">
+          <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full" />
+          <div className="relative bg-slate-900 border border-white/10 p-4 rounded-2xl shadow-2xl">
+            <Plane className="w-8 h-8 text-indigo-400 animate-pulse" />
+          </div>
+        </div>
+        <div className="flex items-center gap-3 text-slate-400">
+          <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+          <span className="font-medium tracking-wide text-sm">Checking authentication...</span>
+        </div>
+      </div>
+    );
+  }
 
   const handleSignIn = async () => {
     try {

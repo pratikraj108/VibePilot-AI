@@ -23,10 +23,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
+    // 1. Subscribe to auth state changes to keep user state in sync
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
     });
+
+    // 2. Wait for Firebase to finish initializing and restoring the session
+    auth.authStateReady()
+      .then(() => {
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Firebase auth state ready check failed:", error);
+        setLoading(false);
+      });
 
     return () => unsubscribe();
   }, []);
