@@ -23,18 +23,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("[AuthContext] Mounting AuthProvider. Initializing listeners...");
+
     // 1. Subscribe to auth state changes to keep user state in sync
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log("[AuthContext] onAuthStateChanged fired. User ID:", currentUser ? currentUser.uid : "null");
       setUser(currentUser);
     });
 
     // 2. Wait for Firebase to finish initializing and restoring the session
     auth.authStateReady()
       .then(() => {
+        console.log("[AuthContext] authStateReady resolved. Current user in auth object:", auth.currentUser ? auth.currentUser.uid : "null");
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Firebase auth state ready check failed:", error);
+        console.error("[AuthContext] authStateReady check failed:", error);
         setLoading(false);
       });
 

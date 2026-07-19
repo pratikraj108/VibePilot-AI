@@ -13,8 +13,12 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  console.log(`[LoginPage] Render. authLoading=${authLoading}, user=${user ? user.uid : "null"}`);
+
   useEffect(() => {
+    console.log(`[LoginPage] Effect check. authLoading=${authLoading}, user=${user ? user.uid : "null"}`);
     if (!authLoading && user) {
+      console.log("[LoginPage] Redirecting to /dashboard - active session detected.");
       router.push("/dashboard");
     }
   }, [user, authLoading, router]);
