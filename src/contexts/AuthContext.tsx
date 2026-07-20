@@ -1,11 +1,18 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { User, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
+import { createContext, useContext } from "react";
+import { useUser, useClerk } from "@clerk/nextjs";
+
+export interface AppUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  rawUser: any;
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
@@ -19,49 +26,37 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user: clerkUser, isLoaded } = useUser();
+  const { signOut, redirectToSignIn } = useClerk();
 
-  useEffect(() => {
-    console.log("[AuthContext] Mounting AuthProvider. Initializing listeners...");
+  const user: AppUser | null = clerkUser
+    ? {
+        uid: clerkUser.id,
+        email: clerkUser.primaryEmailAddress?.emailAddress || null,
+        displayName:
+          clerkUser.fullName ||
+          clerkUser.username ||
+          clerkUser.firstName ||
+          null,
+        photoURL: clerkUser.imageUrl || null,
+        rawUser: clerkUser,
+      }
+    : null;
 
-    // 1. Subscribe to auth state changes to keep user state in sync
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log("[AuthContext] onAuthStateChanged fired. User ID:", currentUser ? currentUser.uid : "null");
-      setUser(currentUser);
-    });
-
-    // 2. Wait for Firebase to finish initializing and restoring the session
-    auth.authStateReady()
-      .then(() => {
-        console.log("[AuthContext] authStateReady resolved. Current user in auth object:", auth.currentUser ? auth.currentUser.uid : "null");
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("[AuthContext] authStateReady check failed:", error);
-        setLoading(false);
-      });
-
-    return () => unsubscribe();
-  }, []);
+  const loading = !isLoaded;
 
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (error: any) {
-      console.error("Error signing in with Google", error);
-      if (error?.code === "auth/popup-blocked") {
-        // Fallback to redirect if popup is blocked
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        throw error;
-      }
+      await redirectToSignIn({ redirectUrl: "/dashboard" });
+    } catch (error) {
+      console.error("Error starting sign in", error);
+      throw error;
     }
   };
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      await signOut({ redirectUrl: "/login" });
     } catch (error) {
       console.error("Error signing out", error);
       throw error;

@@ -10,12 +10,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  console.log(`[ProtectedRoute] Render. loading=${loading}, user=${user ? user.uid : "null"}, pathname=${pathname}`);
-
   useEffect(() => {
-    console.log(`[ProtectedRoute] Effect check. loading=${loading}, user=${user ? user.uid : "null"}`);
     if (!loading && !user) {
-      console.log("[ProtectedRoute] Redirecting to /login - session not found.");
       router.push("/login");
     }
   }, [user, loading, router, pathname]);

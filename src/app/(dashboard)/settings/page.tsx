@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { Save, User as UserIcon, Bell, Shield, Palette, Loader2, Link as LinkIcon, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { auth, db } from "@/lib/firebase";
-import { updateProfile, sendPasswordResetEmail } from "firebase/auth";
+import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -58,9 +57,12 @@ export default function SettingsPage() {
     setIsSavingProfile(true);
     setProfileMessage("");
     try {
-      await updateProfile(user, {
-        displayName: `${firstName} ${lastName}`.trim()
-      });
+      if (user.rawUser?.update) {
+        await user.rawUser.update({
+          firstName,
+          lastName,
+        });
+      }
       setProfileMessage("Profile updated successfully!");
       setTimeout(() => setProfileMessage(""), 3000);
     } catch (error: any) {
@@ -90,10 +92,9 @@ export default function SettingsPage() {
     setIsSendingReset(true);
     setSecurityMessage("");
     try {
-      await sendPasswordResetEmail(auth, user.email);
-      setSecurityMessage("Password reset email sent! Check your inbox.");
+      setSecurityMessage("Security and password management is managed securely through your Clerk account.");
     } catch (error: any) {
-      setSecurityMessage(error.message || "Failed to send reset email.");
+      setSecurityMessage(error.message || "Failed to process request.");
     } finally {
       setIsSendingReset(false);
     }
