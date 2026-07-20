@@ -1,0 +1,108 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Priority {
+  Low
+  Medium
+  High
+}
+
+model User {
+  id                    String                 @id // Clerk userId
+  email                 String?
+  name                  String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  tasks                 Task[]
+  activities            Activity[]
+  productivityAnalytics ProductivityAnalytics?
+  preferences           UserPreferences?
+}
+
+model UserPreferences {
+  id             String  @id @default(uuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeklyDigest   Boolean @default(true)
+  taskUpdates    Boolean @default(true)
+  securityAlerts Boolean @default(true)
+}
+
+model Task {
+  id             String      @id @default(uuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  description    String
+  deadline       String
+  priority       Priority    @default(Medium)
+  estimatedHours Float
+  completed      Boolean     @default(false)
+  createdAt      BigInt
+  actionPlan     AIPlan?
+  subtasks       SubTask[]
+  scheduleItems  Schedule[]
+  activities     Activity[]
+}
+
+model AIPlan {
+  id            String     @id @default(uuid())
+  taskId        String     @unique
+  task          Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  riskScore     Float
+  riskLevel     String
+  reason        String
+  suggestions   String[]
+  isEmergency   Boolean    @default(false)
+  emergencyPlan Json?
+  generatedAt   BigInt
+}
+
+model SubTask {
+  id             String   @id @default(uuid())
+  taskId         String
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title          String
+  description    String
+  estimatedHours Float
+  priority       Priority @default(Medium)
+}
+
+model Schedule {
+  id             String   @id @default(uuid())
+  taskId         String
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  day            Int
+  date           String
+  hoursAllocated Float
+  plan           String
+  completed      Boolean  @default(false)
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  action    String
+  name      String
+  color     String?
+  createdAt DateTime @default(now())
+}
+
+model ProductivityAnalytics {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completionRate Float    @default(0)
+  score          Int      @default(100)
+  tasksCompleted Int      @default(0)
+  updatedAt      DateTime @updatedAt
+}

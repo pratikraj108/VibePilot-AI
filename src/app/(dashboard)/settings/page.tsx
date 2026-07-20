@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { Save, User as UserIcon, Bell, Shield, Palette, Loader2, Link as LinkIcon, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SettingsPage() {
@@ -36,13 +34,13 @@ export default function SettingsPage() {
       setFirstName(names[0] || "");
       setLastName(names.slice(1).join(" ") || "");
       
-      // Load preferences
+      // Load preferences via Prisma API
       const loadPrefs = async () => {
         try {
-          const docRef = doc(db, "users", user.uid, "settings", "preferences");
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setPreferences(docSnap.data() as any);
+          const res = await fetch("/api/user/preferences");
+          if (res.ok) {
+            const data = await res.json();
+            setPreferences(data);
           }
         } catch (error) {
           console.error("Failed to load preferences", error);
@@ -77,9 +75,17 @@ export default function SettingsPage() {
     setIsSavingPrefs(true);
     setPrefsMessage("");
     try {
-      await setDoc(doc(db, "users", user.uid, "settings", "preferences"), preferences);
-      setPrefsMessage("Preferences saved successfully!");
-      setTimeout(() => setPrefsMessage(""), 3000);
+      const res = await fetch("/api/user/preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(preferences),
+      });
+      if (res.ok) {
+        setPrefsMessage("Preferences saved successfully!");
+        setTimeout(() => setPrefsMessage(""), 3000);
+      } else {
+        throw new Error("Failed to save preferences.");
+      }
     } catch (error: any) {
       setPrefsMessage(error.message || "Failed to save preferences.");
     } finally {

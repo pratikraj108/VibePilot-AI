@@ -1,44 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Task } from "@/types/task";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/lib/firebase";
-import { collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, query } from "firebase/firestore";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
+  const fetchTasks = useCallback(async () => {
     if (!user) {
       setTasks([]);
       setIsLoaded(true);
       return;
     }
 
-    const tasksRef = collection(db, "users", user.uid, "tasks");
-    const q = query(tasksRef);
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const fetchedTasks: Task[] = [];
-        snapshot.forEach((doc) => {
-          fetchedTasks.push(doc.data() as Task);
-        });
-        setTasks(fetchedTasks);
-        setIsLoaded(true);
-      },
-      (error) => {
-        console.error("Error fetching tasks from Firestore:", error);
-        setIsLoaded(true);
+    try {
+      const res = await fetch("/api/tasks");
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(data);
       }
-    );
-
-    return () => unsubscribe();
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setIsLoaded(true);
+    }
   }, [user]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const addTask = async (task: Omit<Task, "id" | "createdAt" | "completed">) => {
     if (!user) return;
@@ -48,28 +41,61 @@ export function useTasks() {
       createdAt: Date.now(),
       completed: false,
     };
+
+    setTasks((prev) => [newTask, ...prev]);
+
     try {
-      await setDoc(doc(db, "users", user.uid, "tasks", newTask.id), newTask);
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTask),
+      });
+      if (!res.ok) {
+        await fetchTasks();
+      }
     } catch (error) {
       console.error("Error adding task:", error);
+      await fetchTasks();
     }
   };
 
   const updateTask = async (id: string, updates: Partial<Omit<Task, "id" | "createdAt">>) => {
     if (!user) return;
+
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+    );
+
     try {
-      await updateDoc(doc(db, "users", user.uid, "tasks", id), updates);
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) {
+        await fetchTasks();
+      }
     } catch (error) {
       console.error("Error updating task:", error);
+      await fetchTasks();
     }
   };
 
   const deleteTask = async (id: string) => {
     if (!user) return;
+
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+
     try {
-      await deleteDoc(doc(db, "users", user.uid, "tasks", id));
+      const res = await fetch(`/api/tasks/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        await fetchTasks();
+      }
     } catch (error) {
       console.error("Error deleting task:", error);
+      await fetchTasks();
     }
   };
 
@@ -77,13 +103,9 @@ export function useTasks() {
     if (!user) return;
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
-    try {
-      await updateDoc(doc(db, "users", user.uid, "tasks", id), {
-        completed: !task.completed,
-      });
-    } catch (error) {
-      console.error("Error toggling task completion:", error);
-    }
+
+    const newCompleted = !task.completed;
+    await updateTask(id, { completed: newCompleted });
   };
 
   return {
