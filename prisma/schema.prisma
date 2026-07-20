@@ -1,108 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-enum Priority {
-  Low
-  Medium
-  High
-}
-
 model User {
-  id                    String                 @id // Clerk userId
+  id                    String                 @id
   email                 String?
   name                  String?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
-  tasks                 Task[]
   activities            Activity[]
   productivityAnalytics ProductivityAnalytics?
+  tasks                 Task[]
   preferences           UserPreferences?
 }
 
 model UserPreferences {
   id             String  @id @default(uuid())
   userId         String  @unique
-  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   weeklyDigest   Boolean @default(true)
   taskUpdates    Boolean @default(true)
   securityAlerts Boolean @default(true)
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Task {
-  id             String      @id @default(uuid())
+  id             String     @id @default(uuid())
   userId         String
-  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   title          String
   description    String
   deadline       String
-  priority       Priority    @default(Medium)
+  priority       Priority   @default(Medium)
   estimatedHours Float
-  completed      Boolean     @default(false)
+  completed      Boolean    @default(false)
   createdAt      BigInt
   actionPlan     AIPlan?
-  subtasks       SubTask[]
-  scheduleItems  Schedule[]
   activities     Activity[]
+  scheduleItems  Schedule[]
+  subtasks       SubTask[]
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AIPlan {
-  id            String     @id @default(uuid())
-  taskId        String     @unique
-  task          Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  taskId        String   @unique
   riskScore     Float
   riskLevel     String
   reason        String
   suggestions   String[]
-  isEmergency   Boolean    @default(false)
+  isEmergency   Boolean  @default(false)
   emergencyPlan Json?
   generatedAt   BigInt
+  task          Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model SubTask {
   id             String   @id @default(uuid())
   taskId         String
-  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   title          String
   description    String
   estimatedHours Float
   priority       Priority @default(Medium)
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Schedule {
-  id             String   @id @default(uuid())
+  id             String  @id @default(uuid())
   taskId         String
-  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   day            Int
   date           String
   hoursAllocated Float
   plan           String
-  completed      Boolean  @default(false)
+  completed      Boolean @default(false)
+  task           Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Activity {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   taskId    String?
-  task      Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
   action    String
   name      String
   color     String?
   createdAt DateTime @default(now())
+  task      Task?    @relation(fields: [taskId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProductivityAnalytics {
   id             String   @id @default(uuid())
   userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   completionRate Float    @default(0)
   score          Int      @default(100)
   tasksCompleted Int      @default(0)
   updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Priority {
+  Low
+  Medium
+  High
 }
